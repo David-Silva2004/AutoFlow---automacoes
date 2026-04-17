@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users/{userId}/automations/wppconnect-analyzer
+    // Document ID: wppconnect-analyzer
+    // Fields:
+    //   - uid: string (required) - User's ID
+    //   - wppApiUrl: string (optional) - ZAPI instance URL
+    //   - token: string (optional) - ZAPI client token
+    //   - targetNumber: string (optional) - recipient WhatsApp number
+    //   - schedules: list (optional) - cron times
+    //   - isActive: boolean (optional) - whether automation is on
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+       return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+       return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasOnlyAllowedFields(allowedFields) {
+      return request.resource.data.keys().hasOnly(allowedFields);
+    }
+
+    function isValidConfig(data, userId) {
+      let allowedKeys = ['uid', 'wppApiUrl', 'token', 'targetNumber', 'schedules', 'isActive'];
+      return hasOnlyAllowedFields(allowedKeys) &&
+             data.uid == userId &&
+             (!('wppApiUrl' in data) || data.wppApiUrl is string) &&
+             (!('token' in data) || data.token is string) &&
+             (!('targetNumber' in data) || data.targetNumber is string) &&
+             (!('schedules' in data) || data.schedules is list) &&
+             (!('isActive' in data) || data.isActive is bool);
+    }
+
+    match /users/{userId}/automations/wppconnect-analyzer {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidConfig(request.resource.data, userId);
+      allow delete: if isOwner(userId);
+    }
+  }
+}

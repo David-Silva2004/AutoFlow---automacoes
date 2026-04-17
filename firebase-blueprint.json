@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "UserConfig": {
+      "title": "User Configurations",
+      "description": "User specific configurations for AutoFlow automations",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User's unique ID" },
+        "wppApiUrl": { "type": "string", "description": "The Z-API instance URL" },
+        "token": { "type": "string", "description": "The Z-API client token" },
+        "targetNumber": { "type": "string", "description": "The recipient WhatsApp number" },
+        "schedules": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Array of cron times or simple hour numbers to schedule"
+        },
+        "isActive": { "type": "boolean", "description": "Whether the automation is active" }
+      },
+      "required": ["uid"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/automations/wppconnect-analyzer": {
+      "schema": { "$ref": "#/entities/UserConfig" },
+      "description": "Stores user WPP Analyzer configuration"
+    }
+  }
+}
