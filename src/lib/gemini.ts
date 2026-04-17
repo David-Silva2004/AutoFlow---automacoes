@@ -1,12 +1,23 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize the API client.
-export const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+export function getAIClient(): GoogleGenAI {
+  if (!aiInstance) {
+    // Vercel build time evaluates this to undefined if missing. We must handle it.
+    const key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY2 || "";
+    aiInstance = new GoogleGenAI({ 
+      apiKey: key 
+    });
+  }
+  return aiInstance;
+}
 
 export async function runAutomation(systemInstruction: string, prompt: string) {
   try {
+    const ai = getAIClient();
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-flash-preview",
       contents: prompt,
       config: {
         systemInstruction,
@@ -19,3 +30,4 @@ export async function runAutomation(systemInstruction: string, prompt: string) {
     throw error;
   }
 }
+
